@@ -1,0 +1,85 @@
+version "3.8"
+
+x-common-variables: &common-variables
+  - BASE_HOST
+  - FRONT_HOST
+  - BACK_HOST
+  - ENV_MODE
+
+services:
+  traefik:
+    image: traefik:v2.4.11
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    networks:
+      default:
+        aliases:
+          - $HOST
+    environment:
+      <<: *common-variables
+    volumes:
+      - ./docker/traefik:/etc/traefik
+      - /var/run/docker.sock:/var/run/docker.sock
+      # - ./docker/traefik/acme.json:/acme.json
+  
+  front:
+    build:
+      context: front
+      target: base
+    volumes:
+      - ./front/sources:/var/www
+    environment:
+      <<: *common-variables
+      APP_UID: ${APP_UID:-1000}
+    ports:
+      - '8888:8888'
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=default'
+      # http
+      - 'traefik.http.routers.front.rule=Host(`$FRONT_HOST`)'
+      - 'traefik.http.routers.front.entrypoints=web'
+      - 'traefik.http.routers.front.service=front'
+      - 'traefik.http.routers.front.middlewares=front-redirect-scheme'
+      # https
+      - 'traefik.http.routers.front-tls.rule=Host(`$FRONT_HOST`)'
+      - "traefik.http.routers.front-tls.entrypoints=websecure"
+      - 'traefik.http.routers.front-tls.service=front'
+      # - "traefik.http.routers.front-tls.tls.certresolver=myresolver"
+      # Service
+      - 'traefik.http.services.front.loadbalancer.server.port=80'
+      # Middlewares
+      - "traefik.http.middlewares.front-redirect-scheme.redirectscheme.scheme=https"
+
+  back:
+    build:
+      context: back
+      target: base
+    volumes:
+      - ./back/sources:/var/www
+    environment:
+      <<: *common-variables
+      APP_UID: ${APP_UID:-1000}
+    ports:
+      - '8888:8888'
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=default'
+      # http
+      - 'traefik.http.routers.back.rule=Host(`$BACK_HOST`)'
+      - 'traefik.http.routers.back.entrypoints=web'
+      - 'traefik.http.routers.back.service=back'
+      - 'traefik.http.routers.back.middlewares=back-redirect-scheme'
+      # https
+      - 'traefik.http.routers.back-tls.rule=Host(`$BACK_HOST`)'
+      - "traefik.http.routers.back-tls.entrypoints=websecure"
+      - 'traefik.http.routers.back-tls.service=back'
+      # - "traefik.http.routers.back-tls.tls.certresolver=myresolver"
+      # Service
+      - 'traefik.http.services.back.loadbalancer.server.port=80'
+      # Middlewares
+      - "traefik.http.middlewares.back-redirect-scheme.redirectscheme.scheme=https"
+
+volumes:
