@@ -1,0 +1,26 @@
+[global]
+  sendAnonymousUsage = false
+
+[api]
+  insecure = true
+  debug = true
+
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+
+  [entryPoints.websecure]
+    address = ":443"
+
+# [certificatesResolvers.myresolver.acme]
+#   email = "arnaud.labenne@dotsafe.fr"
+#   storage = "acme.json"
+#   [certificatesResolvers.myresolver.acme.dnsChallenge]
+#     provider = "ovh"
+
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+  watch = true
+  exposedByDefault = false
+
+

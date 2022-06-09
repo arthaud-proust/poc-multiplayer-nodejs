@@ -8,10 +8,9 @@ mkdir -p /home/app && chown app:app /home/app
 
 chmod 777 /var/www
 
-
 if [[ "$ENV_MODE" = "production" ]]
 then
-    su -c "npm install && npm run start" app
+    su -c "npm install && npm run build" app
 else
     su -c "npm install && npm run dev" app
 fi

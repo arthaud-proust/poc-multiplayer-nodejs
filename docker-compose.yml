@@ -1,14 +1,14 @@
-version "3.8"
+version: "3.8"
 
 x-common-variables: &common-variables
-  - BASE_HOST
-  - FRONT_HOST
-  - BACK_HOST
-  - ENV_MODE
+  BASE_HOST: ${BASE_HOST}
+  FRONT_HOST: ${FRONT_HOST}
+  BACK_HOST: ${BACK_HOST}
+  ENV_MODE: ${ENV_MODE}
 
 services:
   traefik:
-    image: traefik:v2.4.11
+    image: traefik:v2.7
     ports:
       - '80:80'
       - '443:443'
@@ -16,7 +16,7 @@ services:
     networks:
       default:
         aliases:
-          - $HOST
+          - $BASE_HOST
     environment:
       <<: *common-variables
     volumes:
@@ -33,8 +33,6 @@ services:
     environment:
       <<: *common-variables
       APP_UID: ${APP_UID:-1000}
-    ports:
-      - '8888:8888'
     labels:
       - "traefik.enable=true"
       - 'traefik.docker.network=default'
@@ -47,9 +45,9 @@ services:
       - 'traefik.http.routers.front-tls.rule=Host(`$FRONT_HOST`)'
       - "traefik.http.routers.front-tls.entrypoints=websecure"
       - 'traefik.http.routers.front-tls.service=front'
-      # - "traefik.http.routers.front-tls.tls.certresolver=myresolver"
+      - "traefik.http.routers.front-tls.tls.certresolver=myresolver"
       # Service
-      - 'traefik.http.services.front.loadbalancer.server.port=80'
+      - 'traefik.http.services.front.loadbalancer.server.port=3000'
       # Middlewares
       - "traefik.http.middlewares.front-redirect-scheme.redirectscheme.scheme=https"
 
@@ -62,8 +60,6 @@ services:
     environment:
       <<: *common-variables
       APP_UID: ${APP_UID:-1000}
-    ports:
-      - '8888:8888'
     labels:
       - "traefik.enable=true"
       - 'traefik.docker.network=default'
@@ -76,10 +72,8 @@ services:
       - 'traefik.http.routers.back-tls.rule=Host(`$BACK_HOST`)'
       - "traefik.http.routers.back-tls.entrypoints=websecure"
       - 'traefik.http.routers.back-tls.service=back'
-      # - "traefik.http.routers.back-tls.tls.certresolver=myresolver"
+      - "traefik.http.routers.back-tls.tls.certresolver=myresolver"
       # Service
       - 'traefik.http.services.back.loadbalancer.server.port=80'
       # Middlewares
       - "traefik.http.middlewares.back-redirect-scheme.redirectscheme.scheme=https"
-
-volumes:
